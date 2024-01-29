@@ -1,12 +1,3 @@
-*********************************************************************************
-* AUTHOR		: MAGHFIRA RAMADHANI											*
-* PROJECT		: HOMEWORK 2													*
-* COURSE		: ECON7103 Environmental Economics II							*
-* DESCRIPTION	: Main Code														*
-* INPUT			: NA	    													*
-* OUTPUT		: .\output\table, .\output\figure, .\output\log					*
-* STATA VERSION	: Stata/MP 18.0													*
-*********************************************************************************
 
 clear
 version 18.0
@@ -18,17 +9,9 @@ capture graph drop _all
 matrix drop _all
 
 *********************************************************************************
-* Setup the profile of your machine
-
-	* Select option to install Stata packages (list package in profile.do)
 	
-	global install_stata_packages 0 // Set to 1 for first time running, 0 o/w
-	
-	* Select option to export log
-	
+	global install_stata_packages 0 // Set to 1 for first time running, 0 o/w	
 	global export_log 1 // Set to 1 if you want to export log, 0 o/w
-
-	* Set the location of project directory location
 	
 	global path "C:\Users\Owner\Dropbox\Personal\Enviro Econ II\phdee-2023-DW\homework2"
 	global data_path "$path\data"
