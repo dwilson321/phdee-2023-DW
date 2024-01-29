@@ -41,18 +41,3 @@ eststo differences:  estpost ttest electricity sqft temp, by(retrofit) unequal
 
 
 
-*********************************************************************************
-* Q1 Run the given Python code from Shell (make sure dependency are all installed)
-	
-	!python 1_python_OLS.py
-
-*********************************************************************************
-* Q2 Run the given Stata code
-
-	do "$code_path\2_stata_code.do"
-
-*********************************************************************************
-* End of code
-if $export_log = 1{
-	log close
-	}
