@@ -1,0 +1,127 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage[utf8]{inputenc}
+\usepackage{hyperref}
+\usepackage[letterpaper, portrait, margin=1in]{geometry}
+\usepackage{enumitem}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage[flushleft]{threeparttable}
+\usepackage{textcomp}
+\hypersetup{
+colorlinks=true,
+    linkcolor=black,
+    filecolor=black,      
+    urlcolor=blue,
+    citecolor=black,
+}
+
+
+
+\usepackage{titlesec}
+  
+\title{Homework 2 Submission}
+\author{David Wilson \\ Economics 7103}
+\date{\today}
+
+  
+\begin{document}
+  
+\maketitle
+
+\section*{Introduction}
+
+For this assignment we were given access to imaginary data on a energy-efficiency retrofit program in Atlanta and asked to analyze if the program reduced energy usage. Houses were assigned to either a treatment or control group where the treatment group received the retrofit and the control group did not.
+
+\section{Python}
+    \subsection{Balance Table} 
+    To analyze the randomization of the treatment and control groups we need to create a balance table. Table 1 below shows the sample mean and standard deviation between the treatment and control groups.\
+
+\begin{table}[h]
+    \centering
+    \begin{threeparttable}
+    \caption{Balance Table from Python}
+        \input{table1}
+        \begin{tablenotes}
+          \small \item \textbf{Note:} Columns 1 and 2 contain the mean and standard deviations for each variable in the control and treatment groups. Column 3 has the P-value for the difference in means tests with the t-statistic in parenthesis.  
+        \end{tablenotes}
+    \end{threeparttable}
+\end{table}
+
+The balance table shows that there is not enough difference between the two groups that would be evidence of selection bias. 
+
+\subsection{Graphical Evidence}
+
+Figure 1 below shows the density plot of both treatment and control group. The fact that the retrofitting consumes less electricity at all levels shows that the retrofitting has worked.
+
+\begin{figure}[H]\centering
+    \includegraphics[width=0.7\linewidth]{kdensity.pdf}
+    \caption{Density plot of electricity consumption}
+\end{figure}
+
+\subsection{OLS}
+
+\begin{table}[h]
+    \centering
+    \begin{threeparttable}
+    \caption{OLS Estimates Using Different Methods}
+        \input{ols}
+        \begin{tablenotes}
+          \small \item \textbf{Note:} Standard errors in parentheses. 
+        \end{tablenotes}
+    \end{threeparttable}
+\end{table}
+
+\begin{table}[h]
+    \centering
+    \begin{threeparttable}
+    \caption{OLS Estimates Using Different Methods with Robust Standard Errors}
+        \input{ols_robust}
+        \begin{tablenotes}
+          \small \item \textbf{Note:} Robust standard errors in parentheses. 
+        \end{tablenotes}
+    \end{threeparttable}
+\end{table}
+
+\section{Stata}
+\subsection{Balance Table}
+Similarly to the previous section's Python balance table, this table has the mean for each variable of the control and treatment sample groups with their standard deviations in parentheses. It shows the exact same values as the Python version highlighting the lesson that the outcome of this procedure is the same even when using different statistical software.
+\begin{table}[ht]
+    \centering
+    \begin{threeparttable}
+    \caption{Balance Table in Stata}
+        \input{balance}
+        \begin{tablenotes}
+          \small \item \textbf{Note:} Values are the mean within each sample for each variable with the standard deviations in parentheses. 
+        \end{tablenotes}
+    \end{threeparttable}
+\end{table}
+
+\subsection{Scatterplot}
+
+This is a scatterplot created in Stata with the monthly energy consumption on the y-axis and the square footage of the home on the x-axis.
+\begin{figure}[H]\centering
+    \includegraphics[width=0.75\linewidth]{twoway.pdf}
+    \caption{Scatter plot showing the relationship between monthly energy consumption and the f$^2$ of a home.}
+\end{figure}
+
+\subsection{OLS regression}
+
+Table 5 contains the OLS estimates using the Stata software. The estimate values are the same again as the ones that we received from Python.\
+\\
+\begin{table}[ht]
+    \centering
+    \begin{threeparttable}
+    \caption{OLS Estimates with Robust Standard Errors}
+        \input{ols_stata}
+        \begin{tablenotes}
+          \small \item \textbf{Note:} Robust standard errors in parentheses. 
+        \end{tablenotes}
+    \end{threeparttable}
+\end{table}
+
+
+\end{document}

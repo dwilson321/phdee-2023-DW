@@ -6,8 +6,13 @@ from scipy import stats
 from OLS import manualOLS
 
 
-datapath = r'C:\Users\Owner\Dropbox\Personal\Enviro Econ II\phdee-2023-DW\homework2\data'
-outputpath = r'C:\Users\Owner\Dropbox\Personal\Enviro Econ II\phdee-2023-DW\homework2\output'
+##Use if at home
+# datapath = r'C:\Users\Owner\Dropbox\Personal\Enviro Econ II\phdee-2023-DW\homework2\data'
+# outputpath = r'C:\Users\Owner\Dropbox\Personal\Enviro Econ II\phdee-2023-DW\homework2\output'
+
+##Use if in the office. Don't forget to switch, moron!
+datapath = r'C:\Users\dwilson321\Dropbox\Personal\Enviro Econ II\phdee-2023-DW\homework2\data'
+outputpath = r'C:\Users\dwilson321\Dropbox\Personal\Enviro Econ II\phdee-2023-DW\homework2\output'
 
 '''
 ------------------------------------------------------------------------------
@@ -40,7 +45,7 @@ p_vals = pd.Series(p_vals, index = retro.columns)
 t_stats = pd.Series(t_stats, index = retro.columns)
 
 ## Set the row and column names
-rownames = pd.concat([pd.Series(['Monthly electricity consumption (kWh)','Square feet of home','Outdoor average temperature (\\textdegree F)', 'Observations']),
+rownames = pd.concat([pd.Series(['Monthly electricity consumption (kWh)','Size of home in ft^2','Average outdoor temperature in F\\textdegree', 'Observations']),
                     pd.Series([' ',' ',' '])],axis = 1).stack() # Note this stacks an empty list to make room for stdevs
 
 ## Format means and standard deviations to two decimal places
@@ -71,10 +76,10 @@ col.to_latex(outputpath + '/table/table1.tex',column_format='lccc',escape=False)
 Q1.2: Graphical Evidence
 ------------------------------------------------------------------------------
 '''
-fig = sns.kdeplot(retro['electricity'], color="r")
-fig = sns.kdeplot(noretro['electricity'], color="b")
+fig = sns.kdeplot(retro['electricity'], color="gold")
+fig = sns.kdeplot(noretro['electricity'], color="navy")
 plt.xlabel('Monthly electricity consumption (kWh)')
-plt.legend(labels = ['Retrofit','No retrofit'],loc = 'best')
+plt.legend(labels = ['Retrofitted','Not retrofitted'],loc = 'best')
 plt.show
 plt.savefig(outputpath + '/figure/kdensity.pdf',format='pdf')
 
@@ -84,7 +89,7 @@ Q1.3: OLS by hand
 ------------------------------------------------------------------------------
 '''
 
-# Run with Dylan's data for Non-robust standard errors
+# Run for non-robust standard errors
 ols1=manualOLS(kwh[['retrofit','sqft','temp']],kwh['electricity'],method='byhand')
 ols1.report()
 
@@ -120,7 +125,7 @@ se_3 = pd.Series(se_3, index = ['retrofit','sqft','temp','cons']).map('({:.3f})'
 mse_3=pd.Series(mse_3).map('{:.3f}'.format)
 
 ## Set the row and column names
-rownames = pd.concat([pd.Series(['=1 if house received retrofit','Square feet of home','Outdoor average temperature (\\textdegree F)','Constant','M.S.E.']),
+rownames = pd.concat([pd.Series(['Received retrofit','Size of home in ft^2','Average outdoor temperature in F\\textdegree','Constant','M.S.E.']),
                     pd.Series([' ',' ',' ',' '])],axis = 1).stack() # Note this stacks an empty list to make room for stdevs
 
 ## Align std deviations under means and add observations
@@ -168,7 +173,7 @@ se_3 = pd.Series(se_3, index = ['retrofit','sqft','temp','cons']).map('({:.3f})'
 mse_3=pd.Series(mse_3).map('{:.3f}'.format)
 
 ## Set the row and column names
-rownames = pd.concat([pd.Series(['=1 if house received retrofit','Square feet of home','Outdoor average temperature (\\textdegree F)','Constant','MSE']),
+rownames = pd.concat([pd.Series(['Received retrofit','Size of home in ft^2','Average outdoor temperature in F\\textdegree','Constant','MSE']),
                     pd.Series([' ',' ',' ',' '])],axis = 1).stack() # Note this stacks an empty list to make room for stdevs
 
 ## Align std deviations under means and add observations
