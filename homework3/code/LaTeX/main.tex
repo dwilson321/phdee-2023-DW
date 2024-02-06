@@ -1,0 +1,69 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage[utf8]{inputenc}
+\usepackage{hyperref}
+\usepackage[letterpaper, portrait, margin=1in]{geometry}
+\usepackage{enumitem}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage[flushleft]{threeparttable}
+\usepackage{textcomp}
+\hypersetup
+{
+colorlinks=true,
+    linkcolor=black,
+    filecolor=black,      
+    urlcolor=blue,
+    citecolor=black,
+}
+
+
+
+\usepackage{titlesec}
+  
+\title{Homework 3 Submission}
+\author{David Wilson \\ Economics 7103}
+
+  
+\begin{document}
+  
+\maketitle
+
+\section*{Stata or Python}
+
+
+
+\begin{enumerate}
+\item Suppose that for a home $i$, you think the underlying relationship between electricity use and predictor variables is $y_i=e^\alpha\delta^{d_i}z_i^{\gamma}e^{\eta_i}$ where $e$ is Euler's number or the base of the natural logarithm, $d_i$ is a binary variable equal to one if home $i$ received the retrofit program, $z_i$ is a vector of the other control variables, and $\eta_i$ is unobserved error, and $\{\alpha,\delta,\gamma\}$ are the parameters to estimate.
+
+\begin{enumerate}
+    \item Show that $\ln(y_i)=\alpha+\ln(\delta)d_i+\gamma\ln(z_i)+\eta_i$\\
+    Take the natural log of both sides.\\
+    \\
+        $\ln(y_i)=\ln(e^\alpha\delta^{d_i}z_i^{\gamma}e^{\eta_i})$\\
+        $\ln(y_i)=\ln(e^\alpha)+\ln(\delta^{d_i})+\ln(z_i^{\gamma})+\ln(e^{\eta_i})$\\
+        $\ln(y_i)=\alpha+d_i\ln(\delta)+\gamma\ln(z_i)+\eta_i$\\
+    
+    
+    \item  What is the intuitive interpretation of $\delta$?\\
+    We could say that $\delta$ is the marginal treatment effect since $d_i$ is the treatment dummy variable. It represents the change in electricity usage if house $i$ received the retrofit program. If the program is expected to lower energy consumption, then we should expect the sign of $\delta$ to be negative.\\
+    \item Show that $\frac{\Delta y_i}{\Delta d_i}=\frac{\delta-1}{\delta^{d_i}}y_i$. What is the intuitive interpretation of $\frac{\Delta y_i}{\Delta d_i}$?\\
+    \\
+
+    \item Show that $\frac{\delta y_i}{\delta z_i}=\gamma\frac{y_i}{z_i}$. What is the intuitive interpretation of $\frac{\delta y_i}{\delta z_i}$ when $z_i$ is the size of the home in square feet?
+
+    \item Estimate the log-transformed equation via ordinary least squares on the transformed parameters using any algorithm you would like. Save the coefficient estimates and the average marginal effects estimates of $z_i$ and $d_i$ $\left(\frac{\delta y_i}{\delta z_i}\text{
+ and }\frac{\Delta y_i}{\Delta d_i}\right)$. Bootstrap the 95\% confidence intervals of the coefficient estimates and the marginal effects estimates using 1000 sampling replications (note that each bootstrap replication should perform both the regression and the second stage calculation of the marginal effect). Display the results in a table with three columns (one for the variable name, one for the coefficient estimate, and one for the marginal effect estimate). Show the 95\% confidence intervals for each estimate under each number.
+
+    \item  Graph the \textbf{average marginal effects} of outdoor temperature and square feet of the home with bands for their bootstrapped confidence intervals so that they are easy to interpret and compare.
+    
+    
+    
+
+
+
+
+\end{document}
