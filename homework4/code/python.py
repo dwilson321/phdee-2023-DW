@@ -1,187 +1,127 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 import seaborn as sns
+import statsmodels.api as sm
 from scipy import stats
-from OLS import manualOLS
+from datetime import date
+
+
 
 
 ##Use if at home
-# datapath = r'C:\Users\Owner\Dropbox\Personal\Enviro Econ II\phdee-2023-DW\homework2\data'
-# outputpath = r'C:\Users\Owner\Dropbox\Personal\Enviro Econ II\phdee-2023-DW\homework2\output'
+# datapath = r'C:\Users\Owner\Dropbox\Personal\Enviro Econ II\phdee-2023-DW\homework4\data'
+# outputpath = r'C:\Users\Owner\Dropbox\Personal\Enviro Econ II\phdee-2023-DW\homework4\output'
 
 ##Use if in the office. Don't forget to switch, moron!
-datapath = r'C:\Users\dwilson321\Dropbox\Personal\Enviro Econ II\phdee-2023-DW\homework2\data'
-outputpath = r'C:\Users\dwilson321\Dropbox\Personal\Enviro Econ II\phdee-2023-DW\homework2\output'
+datapath = r'C:\Users\dwilson321\Dropbox\Personal\Enviro Econ II\phdee-2023-DW\homework4\data'
+outputpath = r'C:\Users\dwilson321\Dropbox\Personal\Enviro Econ II\phdee-2023-DW\homework4\output'
 
-'''
-------------------------------------------------------------------------------
-Q1.1: Difference in means
-------------------------------------------------------------------------------
-'''
-
-kwh=pd.read_csv(datapath +'/kwh.csv')
-
-retro=kwh.loc[kwh['retrofit']==1].drop('retrofit',axis=1)
-noretro=kwh.loc[kwh['retrofit']==0].drop('retrofit',axis=1)
-
-# Generate a table of means and standard deviations for the observed variables (there are faster ways to do this that are less general)
-## Generate means and standard deviations
-means_control = noretro.mean()
-stdev_control = noretro.std()
-nobs_control = pd.Series(noretro.count().min())
-
-means_treatment_1 = retro.mean()
-stdev_treatment = retro.std()
-nobs_treatment = pd.Series(retro.count().min())
-
-## Compute P-values and t-statistics
-p_vals = []
-t_stats = []    
-for col in retro.columns:
-    p_vals.append(stats.ttest_ind(noretro[col],retro[col],)[1])
-    t_stats.append(stats.ttest_ind(noretro[col],retro[col],)[0])
-p_vals = pd.Series(p_vals, index = retro.columns)
-t_stats = pd.Series(t_stats, index = retro.columns)
-
-## Set the row and column names
-rownames = pd.concat([pd.Series(['Monthly electricity consumption (kWh)','Size of home in ft^2','Average outdoor temperature in F\\textdegree', 'Observations']),
-                    pd.Series([' ',' ',' '])],axis = 1).stack() # Note this stacks an empty list to make room for stdevs
-
-## Format means and standard deviations to two decimal places
-means_control = means_control.map('{:.2f}'.format)
-stdev_control = stdev_control.map('({:.2f})'.format)
-nobs_control = nobs_control.map('{:.0f}'.format)
-
-means_treatment = means_treatment_1.map('{:.2f}'.format)
-stdev_treatment = stdev_treatment.map('({:.2f})'.format)
-nobs_treatment = nobs_treatment.map('{:.0f}'.format)
-
-p_vals = p_vals.map('{:.3f}'.format)
-t_stats = t_stats.map('[{:.3f}]'.format)
-
-## Align std deviations under means and add observations
-col1 = pd.concat([means_control,stdev_control,nobs_control],axis = 1).stack()
-col2 = pd.concat([means_treatment,stdev_treatment,nobs_treatment],axis = 1).stack()
-col3 = pd.concat([p_vals,t_stats,pd.Series([' '])],axis = 1).stack()
-
-## Add column and row labels.  Convert to dataframe (helps when you export it)
-col = pd.DataFrame({'Control': col1, 'Treatment': col2, 'P-value': col3})
-col.index = rownames
-col.to_latex(outputpath + '/table/table1.tex',column_format='lccc',escape=False)
+#import data
+data=pd.read_csv(datapath +'/fishbycatch.csv')
 
 
-'''
-------------------------------------------------------------------------------
-Q1.2: Graphical Evidence
-------------------------------------------------------------------------------
-'''
-fig = sns.kdeplot(retro['electricity'], color="gold")
-fig = sns.kdeplot(noretro['electricity'], color="navy")
-plt.xlabel('Monthly electricity consumption (kWh)')
-plt.legend(labels = ['Retrofitted','Not retrofitted'],loc = 'best')
-plt.show
-plt.savefig(outputpath + '/figure/kdensity.pdf',format='pdf')
+# Convert wide to long
+data_long=pd.wide_to_long(data, ["shrimp", "salmon", "bycatch"], i="firm", j="Month")
+data_long=data_long.sort_values(by=['firm','Month'], ascending=True).reset_index()
+data_long['month']= np.where(data_long['Month']%12==0,12,data_long['Month']%12)
+data_long['year']= np.where(data_long['Month']<=12,2017,2018)
+data_long['date'] = pd.to_datetime(data_long[['year', 'month']].assign(day=1))
 
-'''
-------------------------------------------------------------------------------
-Q1.3: OLS by hand
-------------------------------------------------------------------------------
-'''
+# Create a new column for Treatment and Control groups
+data_long['Group'] = np.where(data_long['treated'] == 1, "Treatment", "Control")
 
-# Run for non-robust standard errors
-ols1=manualOLS(kwh[['retrofit','sqft','temp']],kwh['electricity'],method='byhand')
-ols1.report()
+# 
+# Trends line plot 
+plt.clf()
+sns.lineplot(data=data_long, x="date", y="bycatch", hue="Group")
+plt.xlabel('Month')
+plt.ylabel('Pounds of bycatch in a month')
+plt.axvline(x=date(2018,1,1), color='r', linestyle='-', linewidth=1)
+plt.xlim(date(2017,1,1), date(2018,12,1))
+plt.ylim(50000, 250000)
+# format date on x-axis to show month and year and lean the text
+plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%b %Y'))
+plt.savefig(outputpath + '/figures/trends.pdf',format='pdf')
 
-ols2=manualOLS(kwh[['retrofit','sqft','temp']],kwh['electricity'],method='statsmodels')
-ols2.report()
+# Question 2, Specifications attempt
+treatment_pre=data_long[(data_long['month']==12) & (data_long['year']==2017) & (data_long['treated'] == 1)]['bycatch'].mean()
+treatment_post=data_long[(data_long['month']==1) & (data_long['year']==2018) & (data_long['treated'] == 1)]['bycatch'].mean()
+control_pre=data_long[(data_long['month']==12) & (data_long['year']==2017) & (data_long['treated'] == 0)]['bycatch'].mean()
+control_post=data_long[(data_long['month']==1) & (data_long['year']==2018) & (data_long['treated'] == 0)]['bycatch'].mean()
+DID=(treatment_post-treatment_pre)-(control_post-control_pre)
 
-ols3=manualOLS(kwh[['retrofit','sqft','temp']],kwh['electricity'],method='leastsquares')
-ols3.report()
+did_table=pd.DataFrame({'Sample analog value': [treatment_pre, 
+                                      treatment_post, 
+                                      control_pre, 
+                                      treatment_post, 
+                                      DID]},
+                        index=['$\E[Y_{igt}|g(i)=treatment,t=Pre]=$', 
+                               '$\E[Y_{igt}|g(i)=treatment,t=Post]=$', 
+                               '$\E[Y_{igt}|g(i)=control,t=Pre]=$', 
+                               '$\E[Y_{igt}|g(i)=control,t=Post]=$', 
+                               '\midrule DID='])
+did_table.to_latex(outputpath + '/tables/didestimation.tex', column_format='ll', float_format="%.2f", escape=False)
 
-## Compute estimates and standard errors by
-b_1 = ols1.beta().flatten()
-se_1 = ols1.beta_std().flatten()
-mse_1=ols1.MSE()
-b_1 = pd.Series(b_1, index = ['retrofit','sqft','temp','cons']).map('{:.3f}'.format)
-se_1 = pd.Series(se_1, index = ['retrofit','sqft','temp','cons']).map('({:.3f})'.format)
-mse_1=pd.Series(mse_1).map('{:.3f}'.format)
+#Question 3
+#Shaping the data matrix
+data_q1a=data_long.loc[data_long['Month'].isin([12,13])]
+data_q1a['t2017']=np.where(data_q1a['year']==2017,1,0)
+data_q1a['treatit']=np.where((data_q1a['year']==2018) & (data_q1a['treated']==1),1,0)
+data_q1a.head()
 
 
-## Compute estimates and standard errors
-b_2 = ols2.beta().flatten()
-se_2 = ols2.beta_std().flatten()
-mse_2=ols2.MSE()
-b_2 = pd.Series(b_2, index = ['retrofit','sqft','temp','cons']).map('{:.3f}'.format)
-se_2 = pd.Series(se_2, index = ['retrofit','sqft','temp','cons']).map('({:.3f})'.format)
-mse_2=pd.Series(mse_2).map('{:.3f}'.format)
+# Estimate the DID model using pyfixest the python equivalent of R fixest package
+from pyfixest.estimation import feols, fepois
+from pyfixest.utils import get_data
+from pyfixest.summarize import etable
 
-## Compute estimates and standard errors
-b_3 = ols3.beta().flatten()
-se_3 = ols3.beta_std().flatten()
-mse_3=ols3.MSE()
-b_3 = pd.Series(b_3, index = ['retrofit','sqft','temp','cons']).map('{:.3f}'.format)
-se_3 = pd.Series(se_3, index = ['retrofit','sqft','temp','cons']).map('({:.3f})'.format)
-mse_3=pd.Series(mse_3).map('{:.3f}'.format)
+#Qustion 3a
+ols_a=feols(fml="bycatch ~ treated + treatit | t2017", data=data_q1a, vcov={'CRV1': 'firm'})
+beta_a=ols_a.coef()
+se_a=ols_a.se()
+ci_a=ols_a.confint()
+ols_a.summary()
 
-## Set the row and column names
-rownames = pd.concat([pd.Series(['Received retrofit','Size of home in ft^2','Average outdoor temperature in F\\textdegree','Constant','M.S.E.']),
-                    pd.Series([' ',' ',' ',' '])],axis = 1).stack() # Note this stacks an empty list to make room for stdevs
+# Question 3 b
+# Create the indicator variable
+data_long['treatit']=np.where((data_long['year']==2018) & (data_long['treated']==1),1,0)
+# Get the OLS estimates
+ols_b=feols(fml="bycatch ~ treated + treatit | Month", data=data_long, vcov={'CRV1': 'firm'})
+beta_b=ols_b.coef()
+se_b=ols_b.se()
+ci_b=ols_b.confint()
+ols_b.summary()
 
-## Align std deviations under means and add observations
-col1 = pd.concat([b_1,se_1,mse_1],axis = 1).stack()
-col2 = pd.concat([b_2,se_2,mse_2],axis = 1).stack()
-col3 = pd.concat([b_3,se_3,mse_3],axis = 1).stack()
+# Question 3 c
+# Create the indicator variable
+data_long['treatit']=np.where((data_long['year']==2018) & (data_long['treated']==1),1,0)
+# Get the OLS estimates
+ols_c=feols(fml="bycatch ~ treated + treatit + firmsize + salmon + shrimp | Month", data=data_long, vcov={'CRV1': 'firm'})
+beta_c=ols_c.coef()
+se_c=ols_c.se()
+ci_c=ols_c.confint()
+ols_c.summary()
 
-## Add column and row labels.  Convert to dataframe (helps when you export it)
-col = pd.DataFrame({'By Hand': col1, 'Stats Model': col1, 'Least Squares': col3})
-col.index = rownames
-col.to_latex(outputpath + '/table/ols.tex',column_format='lccc',escape=False)
+# Export to latex
+report_table=pd.DataFrame({'(a)': ["{:0.2f}".format(ols_a.coef()['treatit']), "({:0.2f})".format(ols_a.se()['treatit']), "\checkmark", "\checkmark", "$\\times$","Dec 2017 - Jan 2018"],
+                           '(b)': ["{:0.2f}".format(ols_b.coef()['treatit']), "({:0.2f})".format(ols_b.se()['treatit']), "\checkmark", "\checkmark", "$\\times$","Jan 2017 - Dec 2018"],
+                           '(c)': ["{:0.2f}".format(ols_c.coef()['treatit']), "({:0.2f})".format(ols_c.se()['treatit']), "\checkmark", "\checkmark", "\checkmark","Jan 2017 - Dec 2018"]},
+                        index=['DID estimates', 
+                               ' ',
+                               '\midrule Group FE',
+                               'Month Indicator' ,
+                               'Controls', 
+                               'Sample'])
+report_table.to_latex(outputpath + '/tables/resultstable.tex', column_format='rccc', float_format="%.2f", escape=False)
 
-# Run with Dylan's data for Heteroscedasticity robust standard errors
-ols1=manualOLS(kwh[['retrofit','sqft','temp']],kwh['electricity'],method='byhand',useRobust=True)
-ols1.report()
 
-ols2=manualOLS(kwh[['retrofit','sqft','temp']],kwh['electricity'],method='statsmodels',useRobust=True)  
-ols2.report()
 
-ols3=manualOLS(kwh[['retrofit','sqft','temp']],kwh['electricity'],method='leastsquares',useRobust=True)
-ols3.report()
 
-## Compute estimates and standard errors by
-b_1 = ols1.beta().flatten()
-se_1 = ols1.beta_std().flatten()
-mse_1=ols1.MSE()
-b_1 = pd.Series(b_1, index = ['retrofit','sqft','temp','cons']).map('{:.3f}'.format)
-se_1 = pd.Series(se_1, index = ['retrofit','sqft','temp','cons']).map('({:.3f})'.format)
-mse_1=pd.Series(mse_1).map('{:.3f}'.format)
 
-## Compute estimates and standard errors
-b_2 = ols2.beta().flatten()
-se_2 = ols2.beta_std().flatten()
-mse_2=ols2.MSE()
-b_2 = pd.Series(b_2, index = ['retrofit','sqft','temp','cons']).map('{:.3f}'.format)
-se_2 = pd.Series(se_2, index = ['retrofit','sqft','temp','cons']).map('({:.3f})'.format)
-mse_2=pd.Series(mse_2).map('{:.3f}'.format)
 
-## Compute estimates and standard errors
-b_3 = ols3.beta().flatten()
-se_3 = ols3.beta_std().flatten()
-mse_3=ols3.MSE()
-b_3 = pd.Series(b_3, index = ['retrofit','sqft','temp','cons']).map('{:.3f}'.format)
-se_3 = pd.Series(se_3, index = ['retrofit','sqft','temp','cons']).map('({:.3f})'.format)
-mse_3=pd.Series(mse_3).map('{:.3f}'.format)
 
-## Set the row and column names
-rownames = pd.concat([pd.Series(['Received retrofit','Size of home in ft^2','Average outdoor temperature in F\\textdegree','Constant','MSE']),
-                    pd.Series([' ',' ',' ',' '])],axis = 1).stack() # Note this stacks an empty list to make room for stdevs
 
-## Align std deviations under means and add observations
-col1 = pd.concat([b_1,se_1,mse_1],axis = 1).stack()
-col2 = pd.concat([b_2,se_2,mse_2],axis = 1).stack()
-col3 = pd.concat([b_3,se_3,mse_3],axis = 1).stack()
 
-## Add column and row labels.  Convert to dataframe (helps when you export it)
-col = pd.DataFrame({'By Hand': col1, 'Stats Model': col2, 'Least Squares': col3})
-col.index = rownames
-col.to_latex(outputpath + '/table/ols_robust.tex',column_format='lccc',escape=False)
+

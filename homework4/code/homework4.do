@@ -1,4 +1,5 @@
-
+**Homework 4 for Environmental Economics**
+ *David Wilson*
 clear
 version 18.0
 macro drop _all
@@ -12,85 +13,55 @@ matrix drop _all
 *Set paths	
 
 *Home:
-global path "C:\Users\Owner\Dropbox\Personal\Enviro Econ II\phdee-2023-DW\homework3"
+if "`c(username)'"== "Owner" { 
+	global path "C:\Users\Owner\Dropbox\Personal\Enviro Econ II\phdee-2023-DW\homework4"
+	}
+	
 *Work:
-*global path "C:\Users\dwilson321\Dropbox\Personal\Enviro Econ II\phdee-2023-DW\homework3"
-*Remember to switch if on school PC, idiot!!**
+if "`c(username)'"== "dwilson321" {
+	global path "C:\Users\dwilson321\Dropbox\Personal\Enviro Econ II\phdee-2023-DW\homework4"
+	}
+
 
 global data_path "$path\data"
 global code_path "$path\code" 
-global table_path "$path\output\table" 
+global table_path "$path\output\tables" 
 global figure_path "$path\output\figures"
 
 	
 
 clear	
 *Import .csv file and label variables
-import delimited "$data_path\kwh.csv"
-label variable electricity "Monthly kWh used by the household"
-label variable sqft "Square footage of home"
-label variable retrofit	"Retrofitting dummy variable"
-label variable temp "Average monthly outdoor temperature in F\textdegree"
+import delimited "$data_path\fishbycatch.csv"
 
+*Use reshape to convert panel data from wide to long form
+reshape long shrimp salmon bycatch, i(firm) j(month)
+tsset firm month
+gen treat_it=0
+replace treat_it=1 if month>=13 & treated==1
 
-*Generating natural logarithms
-gen ln_electricity=ln(electricity)
-gen ln_sqft = ln(sqft)
-gen ln_temp	= ln(temp)
-lab var ln_electricity "natural log of monthly kWh used by the household"
-lab var ln_sqft "natural log of square footage of home"
-lab var ln_temp "natural log of average monthly outdoor temperature in F\textdegree"
-
-
-*e. Bootstrapping attempt
-eststo parameter: bootstrap delta=exp(_b[retrofit]) gamma_sqft=_b[ln_sqft] gamma_temp=_b[ln_temp], reps(1000): reg ln_elec retrofit ln_sqft ln_temp
-
-	
-
-	eststo parameter: bootstrap retrofit ln_sqft ln_temp, reps(1000) seed(1): reg ln_elec retrofit ln_sqft ln_temp, robust
-	
-eststo parameter: bootstrap cons=_b[_cons] delta=exp(_b[retrofit]) gamma_sqft=_b[ln_sqft] gamma_temp=_b[ln_temp], reps(1000) seed(1): reg ln_elec retrofit ln_sqft ln_temp, robust
-	capture program drop ameboot
-	program define ameboot, rclass
-	 preserve 
-	  bsample
-		reg ln_elec retrofit ln_sqft ln_temp, robust
-		scalar delta=exp(_b[retrofit])
-		scalar gamma_sqft=(_b[ln_sqft])
-		scalar gamma_temp=(_b[ln_temp])
-		gen dydd=(delta-1)*electricity/(delta^retrofit)
-		sum dydd
-		scalar mean1 = r(mean)
-		gen dyds=gamma_sqft*electricity/sqft
-		sum dyds
-		scalar mean2 = r(mean)
-		gen dydt=gamma_temp*electricity/temp
-		sum dydt
-		scalar mean3 = r(mean)
-		return scalar delta = mean1
-		return scalar gamma_sqft = mean2
-		return scalar gamma_temp = mean3
-	 restore
-	end
-	
-	eststo ame: bootstrap delta = r(delta) gamma_sqft = r(gamma_sqft) gamma_temp = r(gamma_temp), reps(1000) seed(1): ameboot
+foreach m of num 1/24 {
+		gen t_`m'=0
+		replace t_`m'=1 if month==`m'
+	}
+	foreach f of num 1/50 {
+		gen f_`f'=0
+		replace f_`f'=1 if firm==`f'
+	}
+*Demeaning process for within-transformation	
+	foreach x of varlist bycatch treat_it shrimp salmon firmsize {
+	egen mean_`x'=mean(`x'), by(firm)
+	gen demean_`x'=`x' - mean_`x'
+	drop mean*
+	}
 	
 	
-*Exporting the table into .tex
-esttab parameter ame using "$table_path\bootstrappage.tex", label replace cell( 	b(pattern(1 1) fmt(3)) ci(pattern(1 1) fmt(3) par([ ,  ])) ) mtitle("Parameter Estimates" "Marginal Effect Estimates") collabels(none) nostar nonum coeflabels(cons "Constant" delta "Received retrofit" gamma_sqft "Size of home in ft$^2$" gamma_temp "Average outdoor temperature F\textdegree") stats(N, fmt(%15.0fc) label("Observations"))
-
-
-*Plot the average margin
-reg ln_electricity ln_sqft ln_temp, robust
-margins, dydx( ln_temp ln_sqft)
-marginsplot
-
-*Export graph
-graph export "$figure_path\AME.pdf" saved as PDF format
-
-
-
-esttab parameter using "$table_path\bootstrappage.tex", label replace cell( b(pattern(1 1) fmt(3))  se(pattern(1 1) fmt(3) par) ) mtitle("Parameter Estimates" "Average Marginal Effects Estimates") collabels(none) nostar nonum coeflabels(cons "Constant" delta "=1 if home received retrofit" gamma_sqft "Square feet of home" gamma_temp "Outdoor average temperature (\textdegree F)") stats(N, fmt(%15.0fc) label("Observations"))
-
-margins, dydx(temp sqft)
+	est clear
+	eststo: reg bycatch t_* f_* treat_it salmon shrimp firmsize, vce(cluster firm)
+	estadd local method "firm indicators"
+	eststo: reg demean_bycatch demean_treat_it demean_shrimp demean_salmon demean_firmsize, vce(cluster firm)
+	estadd local method "within-transformation"
 	
+	
+* Exporting to a .tex file
+	esttab using "$table_path\stata.tex", rename(demean_treat_it treat_it) label replace 	keep(treat_it) b(2) se(2) mtitle("(a)" "(b)") collabels(none) nostar nonote nonum coeflabels(treat_it "DID estimates") scalars("method Method") obslast
