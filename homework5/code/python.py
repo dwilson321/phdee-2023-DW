@@ -32,8 +32,8 @@ data_long['date'] = pd.to_datetime(data_long[['year', 'month']].assign(day=1))
 # Create a new column for Treatment and Control groups
 data_long['Group'] = np.where(data_long['treated'] == 1, "Treatment", "Control")
 
-# Question 1
-# Create line plot of bycatch over time
+# 
+# Trends line plot 
 plt.clf()
 sns.lineplot(data=data_long, x="date", y="bycatch", hue="Group")
 plt.xlabel('Month')
@@ -43,9 +43,9 @@ plt.xlim(date(2017,1,1), date(2018,12,1))
 plt.ylim(50000, 250000)
 # format date on x-axis to show month and year and lean the text
 plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%b %Y'))
-plt.savefig(outputpath + '/figures/paralleltrend.pdf',format='pdf')
+plt.savefig(outputpath + '/figures/trends.pdf',format='pdf')
 
-# Question 2
+# Question 2, Specifications attempt
 treatment_pre=data_long[(data_long['month']==12) & (data_long['year']==2017) & (data_long['treated'] == 1)]['bycatch'].mean()
 treatment_post=data_long[(data_long['month']==1) & (data_long['year']==2018) & (data_long['treated'] == 1)]['bycatch'].mean()
 control_pre=data_long[(data_long['month']==12) & (data_long['year']==2017) & (data_long['treated'] == 0)]['bycatch'].mean()
@@ -62,7 +62,7 @@ did_table=pd.DataFrame({'Sample analog value': [treatment_pre,
                                '$\E[Y_{igt}|g(i)=control,t=Pre]=$', 
                                '$\E[Y_{igt}|g(i)=control,t=Post]=$', 
                                '\midrule DID='])
-did_table.to_latex(outputpath + '/tables/didcalculation.tex', column_format='rl', float_format="%.2f", escape=False)
+did_table.to_latex(outputpath + '/tables/didestimation.tex', column_format='ll', float_format="%.2f", escape=False)
 
 #Question 3
 #Shaping the data matrix
@@ -114,7 +114,7 @@ report_table=pd.DataFrame({'(a)': ["{:0.2f}".format(ols_a.coef()['treatit']), "(
                                'Month Indicator' ,
                                'Controls', 
                                'Sample'])
-report_table.to_latex(outputpath + '/tables/reporttable1.tex', column_format='rccc', float_format="%.2f", escape=False)
+report_table.to_latex(outputpath + '/tables/resultstable.tex', column_format='rccc', float_format="%.2f", escape=False)
 
 
 
