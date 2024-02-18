@@ -1,0 +1,18 @@
+	(1)
+VARIABLES	price
+	
+height	373.2***
+	(14.28)
+mpg	-34.87*
+	(18.51)
+car	3,343***
+	(379.6)
+weight	-0.645***
+	(0.245)
+Constant	0
+	(0)
+	
+Observations	1,000
+R-squared	0.054
+Standard errors in parentheses	
+*** p<0.01, ** p<0.05, * p<0.1	
