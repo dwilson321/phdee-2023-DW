@@ -35,7 +35,7 @@ clear
 import delimited "$data_path\instrumentalvehicles.csv"
 
 *2.1
-ivregress liml price mpg car weight ( height = length )
+ivregress liml price car ( mpg = weight ), robust
 
 outreg2 using "$table_path\outreg2.tex", replace
 *2.2

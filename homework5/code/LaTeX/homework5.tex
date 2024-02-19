@@ -1,0 +1,87 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage[utf8]{inputenc}
+\usepackage{hyperref}
+\usepackage[letterpaper, portrait, margin=1in]{geometry}
+\usepackage{enumitem}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage[flushleft]{threeparttable}
+\usepackage{textcomp}
+\hypersetup
+{
+colorlinks=true,
+    linkcolor=black,
+    filecolor=black,      
+    urlcolor=blue,
+    citecolor=black,
+}
+
+
+
+
+\usepackage{titlesec}
+  
+\title{Homework 5 Submission}
+\author{David Wilson \\ Economics 7103}
+
+  
+\begin{document}
+  
+\maketitle
+
+\section*{Python}
+
+\begin{enumerate}
+\item Using OLS, the mpg coefficient is -131.0449. This coefficient seems to be rather large and has the wrong sign.
+
+\item The mpg coefficient would be a function of all of the other independent variables. MPG would be affected by whether the vehicle is a sedan or SUV, its weight, height, and length. Specifically, the car coefficient probably has some endogeneity itself since on average sedans tend to be lighter, smaller, and with higher MPG than their SUV counterparts.
+
+\begin{table}[H]
+    \centering
+    \caption{Two-Stage Least Squares Estimates}
+    \begin{threepart}
+        \input{twostage}
+    \end{threepart}
+\end{table}
+
+I think we can see here in Table 1 that the car type has a sizable negative effect on mpg. Intutively, this means that our instruments might not be good instruments for the reasons that we discussed in the first question.
+
+\setcounter{enumi}{3}
+\item The coefficient estimates are the same, but the standard errors are smaller for the IVGMM estimation. This might be because the number of instruments that we have outnumber the regressors. GMM is more accurate than 2SLS in the case of overidentification.
+
+\begin{table}[H]
+    \centering
+    \caption{Two-Stage Least Squares Estimates}
+    \begin{threepart}
+        \input{IVGMM}
+    \end{threepart}
+\end{table}
+
+
+\end{enumerate} 
+   
+\section*{Stata}
+    
+\begin{enumerate}
+
+\item The second stage results are below in Table 3.\\
+
+
+\begin{table}
+\caption{Limited Information Likelihood Estimation}
+    \centering
+    \input{outreg2}
+\end{table}
+    
+
+\item The F-statistic is 37.418. The intuition of the weak instrument test is that if the F-statistic is larger than the critical value, we have a weak instrument. Our results here point to a weak instrument.     
+   
+\end{enumerate}
+   
+
+\end{document}
+

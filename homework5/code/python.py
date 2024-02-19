@@ -1,3 +1,8 @@
+from IPython import get_ipython
+get_ipython().magic('reset -sf')
+
+# Import packages
+import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -6,122 +11,84 @@ import seaborn as sns
 import statsmodels.api as sm
 from scipy import stats
 from datetime import date
-
+from statsmodels.sandbox.regression import gmm
 
 
 
 ##Use if at home
-# datapath = r'C:\Users\Owner\Dropbox\Personal\Enviro Econ II\phdee-2023-DW\homework4\data'
-# outputpath = r'C:\Users\Owner\Dropbox\Personal\Enviro Econ II\phdee-2023-DW\homework4\output'
+# datapath = r'C:\Users\Owner\Dropbox\Personal\Enviro Econ II\phdee-2023-DW\homework5\data'
+# outputpath = r'C:\Users\Owner\Dropbox\Personal\Enviro Econ II\phdee-2023-DW\homework5\output'
 
 ##Use if in the office. Don't forget to switch, moron!
-datapath = r'C:\Users\dwilson321\Dropbox\Personal\Enviro Econ II\phdee-2023-DW\homework4\data'
-outputpath = r'C:\Users\dwilson321\Dropbox\Personal\Enviro Econ II\phdee-2023-DW\homework4\output'
+datapath = r'C:\Users\dwilson321\Dropbox\Personal\Enviro Econ II\phdee-2023-DW\homework5\data'
+outputpath = r'C:\Users\dwilson321\Dropbox\Personal\Enviro Econ II\phdee-2023-DW\homework5\output'
 
 #import data
-data=pd.read_csv(datapath +'/fishbycatch.csv')
+data=pd.read_csv(datapath +'/instrumentalvehicles.csv')
 
 
-# Convert wide to long
-data_long=pd.wide_to_long(data, ["shrimp", "salmon", "bycatch"], i="firm", j="Month")
-data_long=data_long.sort_values(by=['firm','Month'], ascending=True).reset_index()
-data_long['month']= np.where(data_long['Month']%12==0,12,data_long['Month']%12)
-data_long['year']= np.where(data_long['Month']<=12,2017,2018)
-data_long['date'] = pd.to_datetime(data_long[['year', 'month']].assign(day=1))
+#Q1
+ols1=sm.OLS(data['price'],sm.add_constant(data['mpg'])).fit()
+print(ols1.summary())
 
-# Create a new column for Treatment and Control groups
-data_long['Group'] = np.where(data_long['treated'] == 1, "Treatment", "Control")
-
-# 
-# Trends line plot 
-plt.clf()
-sns.lineplot(data=data_long, x="date", y="bycatch", hue="Group")
-plt.xlabel('Month')
-plt.ylabel('Pounds of bycatch in a month')
-plt.axvline(x=date(2018,1,1), color='r', linestyle='-', linewidth=1)
-plt.xlim(date(2017,1,1), date(2018,12,1))
-plt.ylim(50000, 250000)
-# format date on x-axis to show month and year and lean the text
-plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%b %Y'))
-plt.savefig(outputpath + '/figures/trends.pdf',format='pdf')
-
-# Question 2, Specifications attempt
-treatment_pre=data_long[(data_long['month']==12) & (data_long['year']==2017) & (data_long['treated'] == 1)]['bycatch'].mean()
-treatment_post=data_long[(data_long['month']==1) & (data_long['year']==2018) & (data_long['treated'] == 1)]['bycatch'].mean()
-control_pre=data_long[(data_long['month']==12) & (data_long['year']==2017) & (data_long['treated'] == 0)]['bycatch'].mean()
-control_post=data_long[(data_long['month']==1) & (data_long['year']==2018) & (data_long['treated'] == 0)]['bycatch'].mean()
-DID=(treatment_post-treatment_pre)-(control_post-control_pre)
-
-did_table=pd.DataFrame({'Sample analog value': [treatment_pre, 
-                                      treatment_post, 
-                                      control_pre, 
-                                      treatment_post, 
-                                      DID]},
-                        index=['$\E[Y_{igt}|g(i)=treatment,t=Pre]=$', 
-                               '$\E[Y_{igt}|g(i)=treatment,t=Post]=$', 
-                               '$\E[Y_{igt}|g(i)=control,t=Pre]=$', 
-                               '$\E[Y_{igt}|g(i)=control,t=Post]=$', 
-                               '\midrule DID='])
-did_table.to_latex(outputpath + '/tables/didestimation.tex', column_format='ll', float_format="%.2f", escape=False)
-
-#Question 3
-#Shaping the data matrix
-data_q1a=data_long.loc[data_long['Month'].isin([12,13])]
-data_q1a['t2017']=np.where(data_q1a['year']==2017,1,0)
-data_q1a['treatit']=np.where((data_q1a['year']==2018) & (data_q1a['treated']==1),1,0)
-data_q1a.head()
+#Q2
+# First stage mpg on weight (instrument) and car type
+first_stage_a=sm.OLS(data['mpg'],sm.add_constant(data[['weight','car']])).fit()
+data['mpg_hat_a']=first_stage_a.predict(sm.add_constant(data[['weight','car']]))
+f_stat_a=first_stage_a.fvalue
+second_stage_a=sm.OLS(data['price'],sm.add_constant(data[['mpg_hat_a','car']])).fit()
+beta_a=second_stage_a.params
+se_a=second_stage_a.HC1_se
 
 
-# Estimate the DID model using pyfixest the python equivalent of R fixest package
-from pyfixest.estimation import feols, fepois
-from pyfixest.utils import get_data
-from pyfixest.summarize import etable
+# Generate variables weight^2
+data['weight2']=data['weight']**2
 
-#Qustion 3a
-ols_a=feols(fml="bycatch ~ treated + treatit | t2017", data=data_q1a, vcov={'CRV1': 'firm'})
-beta_a=ols_a.coef()
-se_a=ols_a.se()
-ci_a=ols_a.confint()
-ols_a.summary()
-
-# Question 3 b
-# Create the indicator variable
-data_long['treatit']=np.where((data_long['year']==2018) & (data_long['treated']==1),1,0)
-# Get the OLS estimates
-ols_b=feols(fml="bycatch ~ treated + treatit | Month", data=data_long, vcov={'CRV1': 'firm'})
-beta_b=ols_b.coef()
-se_b=ols_b.se()
-ci_b=ols_b.confint()
-ols_b.summary()
-
-# Question 3 c
-# Create the indicator variable
-data_long['treatit']=np.where((data_long['year']==2018) & (data_long['treated']==1),1,0)
-# Get the OLS estimates
-ols_c=feols(fml="bycatch ~ treated + treatit + firmsize + salmon + shrimp | Month", data=data_long, vcov={'CRV1': 'firm'})
-beta_c=ols_c.coef()
-se_c=ols_c.se()
-ci_c=ols_c.confint()
-ols_c.summary()
-
-# Export to latex
-report_table=pd.DataFrame({'(a)': ["{:0.2f}".format(ols_a.coef()['treatit']), "({:0.2f})".format(ols_a.se()['treatit']), "\checkmark", "\checkmark", "$\\times$","Dec 2017 - Jan 2018"],
-                           '(b)': ["{:0.2f}".format(ols_b.coef()['treatit']), "({:0.2f})".format(ols_b.se()['treatit']), "\checkmark", "\checkmark", "$\\times$","Jan 2017 - Dec 2018"],
-                           '(c)': ["{:0.2f}".format(ols_c.coef()['treatit']), "({:0.2f})".format(ols_c.se()['treatit']), "\checkmark", "\checkmark", "\checkmark","Jan 2017 - Dec 2018"]},
-                        index=['DID estimates', 
-                               ' ',
-                               '\midrule Group FE',
-                               'Month Indicator' ,
-                               'Controls', 
-                               'Sample'])
-report_table.to_latex(outputpath + '/tables/resultstable.tex', column_format='rccc', float_format="%.2f", escape=False)
+# First stage mpg on weight (instrument) and car type
+first_stage_b=sm.OLS(data['mpg'],sm.add_constant(data[['weight2','car']])).fit()
+data['mpg_hat_b']=first_stage_b.predict(sm.add_constant(data[['weight2','car']]))
+f_stat_b=first_stage_b.fvalue
+second_stage_b=sm.OLS(data['price'],sm.add_constant(data[['mpg_hat_b','car']])).fit()
+beta_b=second_stage_b.params
+se_b=second_stage_b.HC1_se
 
 
+# First stage mpg on weight (instrument) and car type
+first_stage_c=sm.OLS(data['mpg'],sm.add_constant(data[['height','car']])).fit()
+data['mpg_hat_c']=first_stage_c.predict(sm.add_constant(data[['height','car']]))
+f_stat_c=first_stage_c.fvalue
+second_stage_c=sm.OLS(data['price'],sm.add_constant(data[['mpg_hat_c','car']])).fit()
+beta_c=second_stage_c.params
+se_c=second_stage_c.HC1_se
+
+report_table=pd.DataFrame(
+    {'Weight': ["{:0.2f}".format(beta_a['mpg_hat_a']), "({:0.2f})".format(se_a['mpg_hat_a']), 
+             "{:0.2f}".format(beta_a['car']), "({:0.2f})".format(se_a['car']),
+             "Weight","{:0.2f}".format(f_stat_a)],
+     'Weight$^2$': ["{:0.2f}".format(beta_b['mpg_hat_b']), "({:0.2f})".format(se_b['mpg_hat_b']), 
+             "{:0.2f}".format(beta_b['car']), "({:0.2f})".format(se_b['car']),
+             "Weight$^2$","{:0.2f}".format(f_stat_b)],
+     'Height': ["{:0.2f}".format(beta_c['mpg_hat_c']), "({:0.2f})".format(se_c['mpg_hat_c']), 
+             "{:0.2f}".format(beta_c['car']), "({:0.2f})".format(se_c['car']),
+             "Height","{:0.2f}".format(f_stat_c)]},
+     index=['Miles per gallon', ' ',
+            'Car type (=1 if sedan)', ' ',
+            '\midrule Instrumental variable',
+            'First Stage F-statistic'])
+report_table.to_latex(outputpath + '/tables/twostage.tex', column_format='lccc', float_format="%.2f", escape=False)
 
 
+#Q4
+#IVGMM 
+iv_gmm=IVGMM(data['price'],sm.add_constant(data['car']),data['mpg'],data['weight']).fit()
+beta_gmm=iv_gmm.params
+se_gmm=iv_gmm.std_errors
 
-
-
-
-
-
+report_table=pd.DataFrame(
+    {'2SLS': ["{:0.2f}".format(beta_a['mpg_hat_a']), "({:0.2f})".format(se_a['mpg_hat_a']), 
+             "{:0.2f}".format(beta_a['car']), "({:0.2f})".format(se_a['car'])],
+     'IVGMM': ["{:0.2f}".format(beta_gmm['mpg']), "({:0.2f})".format(se_gmm['mpg']), 
+             "{:0.2f}".format(beta_gmm['car']), "({:0.2f})".format(se_gmm['car'])]},
+     index=['Miles per gallon', ' ',
+            '=1 if the vehicle is sedan', ' '])
+report_table.to_latex(outputpath + '/tables/IVGMM.tex', column_format='lcc', float_format="%.2f", escape=False)
