@@ -8,7 +8,9 @@ set more off, permanently
 capture log close
 capture graph drop _all
 matrix drop _all
-	
+
+ssc install weakivtest
+ssc install avar	
 
 *Set paths	
 
