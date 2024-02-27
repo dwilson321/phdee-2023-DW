@@ -1,0 +1,96 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage[utf8]{inputenc}
+\usepackage{hyperref}
+\usepackage[letterpaper, portrait, margin=1in]{geometry}
+\usepackage{enumitem}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage[flushleft]{threeparttable}
+\usepackage{textcomp}
+\hypersetup
+{
+colorlinks=true,
+    linkcolor=black,
+    filecolor=black,      
+    urlcolor=blue,
+    citecolor=black,
+}
+
+
+
+
+\usepackage{titlesec}
+  
+\title{Homework 6 Submission}
+\author{David Wilson \\ Economics 7103}
+
+  
+\begin{document}
+  
+\maketitle
+
+\section{Hourly data - Stata}
+
+\begin{enumerate}
+\setcounter{enumi}{1}
+\item The number of ATTs with negative weights is 48,547.
+
+
+\item I clustered at the individual level. The estimates are below in Table 1.
+
+\begin{table}[H]
+    \centering
+    \caption{Two-Way Fixed Effects Estimates at the Hourly Level}
+    \begin{threepart}
+        \input{HW6/hrly_twfe}
+    \end{threepart}
+\end{table}
+\end{enumerate}
+\section{Daily data - Stata}
+
+\begin{enumerate}
+
+\item At first glance they differ a lot, but then when we take into consideration that the first question is at the hourly level. When scaled up to the daily level, they are similar. The R$^2$ is about a third lower at the daily level.
+
+\begin{table}[H]
+    \centering
+    \caption{Two-Way Fixed Effects Estimates at the Daily Level}
+    \begin{threepart}
+        \input{HW6/daily_twfe}
+    \end{threepart}
+\end{table}
+
+\item Figure 1 contains the event-study using reghdfe and plotted using coefplot. 
+\begin{figure}[H]
+    \centering
+    \includegraphics{HW6/event_study.pdf}{}
+    \caption{Plot using coefplot.}
+    \label{fig:enter-label}
+\end{figure}
+
+\item 
+\begin{figure}[H]
+    \centering
+    \includegraphics{HW6/eventdd_study.pdf}{}
+    \caption{Plot using eventdd.}
+    \label{fig:enter-label}
+\end{figure}
+
+\item 
+\begin{figure}[H]
+    \centering
+    \includegraphics{HW6/event_study_csdid.pdf}{}
+    \caption{CSDID package estimation.}
+    \label{fig:enter-label}
+\end{figure}
+
+
+
+\end{enumerate} 
+   
+ \end{document}
+
