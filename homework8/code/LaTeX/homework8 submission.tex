@@ -1,0 +1,65 @@
+\documentclass{article}
+\usepackage
+{graphicx} % Required for inserting images
+\usepackage[utf8]{inputenc}
+\usepackage{hyperref}
+\usepackage[letterpaper, portrait, margin=1in]{geometry}
+\usepackage{enumitem}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage[flushleft]{threeparttable}
+\usepackage{textcomp}
+\hypersetup
+{
+colorlinks=true,
+    linkcolor=black,
+    filecolor=black,      
+    urlcolor=blue,
+    citecolor=black,
+}
+
+
+
+
+\usepackage{titlesec}
+  
+\title{Homework 8 Submission}
+\author{David Wilson \\ Economics 7103}
+
+  
+\begin{document}
+  
+\maketitle
+
+\section{Stata}
+
+\begin{enumerate}
+\item  
+
+\begin{enumerate}
+\item The coefficient estimate and heteroskedasticity-robust standard errors for $treatment_t$ are -0.656023 and .0013609, respectively. 
+
+\item You weren't lying about how long that would take. The coefficient estimate and standard errors for $treatment_t$ are -0.0703976 and .0010042, respectively.
+
+\item I think one of the issues with analyzing data across time is handling the temporal heterogeneity. When it comes to household energy consumption, we might see changes from year to year that could be explained by newer appliances, efficiency improvements, or responses to price changes. By not having a year indicator, we might miss some of that heteroscedasticity.
+\end{enumerate}
+
+\item  
+\begin{enumerate}
+\item The coefficient estimate and heteroskedasticity-robust standard errors for $treatment_t$ with the added year indicator are -0.0235563 and .0027058, respectively.
+\item By adding the year indicator variable. we can handle or account for these changes across time.
+\end{enumerate}
+
+\item 
+\begin{enumerate}
+\item The coefficient estimate and heteroskedasticity-robust standard errors for $treatment_t$ are -0.0013555 and .001738, respectively. 
+\item Some analysis on Mahalanobis distance matching can yield worse outcomes than using no matching at all (Rippolone et al 2018). Mahalanobis matching works best when there are few covariates and they are normally distributed. So we need to look for that.
+\end{enumerate}
+
+\end{enumerate} 
+   
+ \end{document}
+
